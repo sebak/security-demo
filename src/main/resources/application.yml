@@ -1,0 +1,4 @@
+server:
+  port: 7902
+  error:
+    include-message: always

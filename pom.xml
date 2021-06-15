@@ -23,7 +23,17 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-webflux</artifactId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<!-- uncomment spring security after we have api to secure even no it will give us authentication form out of the box
+		directly when we start our server and try to connect to it by http request on browser example http://localhost:7902/api/v1/student/eb8d7ad4-cd4f-11eb-b5f2-34e6d72a5caa
+		so first create api and add security dependency.
+		So when we start server with security the log will generate to us a uuid password (Using generated security password: 18ec3d87-d90d-48c9-9741-20dd433e324e)
+		that we will use to connect to our api, in the login field of the form put the default one for spring boot (user)
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
 		<dependency>
@@ -44,11 +54,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.projectreactor</groupId>
-			<artifactId>reactor-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
