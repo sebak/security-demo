@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -14,8 +15,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
-import static com.example.securitydemo.security.ApplicationUserRole.ADMIN;
-import static com.example.securitydemo.security.ApplicationUserRole.STUDENT;
+import static com.example.securitydemo.security.ApplicationUserRole.*;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @RequiredArgsConstructor
@@ -33,6 +33,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+                .csrf().disable()
                 .authorizeRequests() // we want to authorize request
                 /* The next both line is to tell that any file that will be in root(/), will have index in the name, will be in /css and /js
                 dir dont need to be authenticate. i can test on browser by this url http://localhost:7902/ (it will give me access to index.html define in resources/static),
@@ -40,6 +41,14 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 * */
                 .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
                 .antMatchers("/api/**").hasRole(STUDENT.name()) // we say that only ROLE_STUDENT will be only to access any thing with pattern /api/***
+                /**
+                 * only users with COURSE_WRITE permissions can delete, post and put in management api
+                 * and also we add more security by saying that management api can only be access by roles ADMIN and ADMINTRAINEE
+                 */
+                .antMatchers(HttpMethod.DELETE, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.name())
+                .antMatchers(HttpMethod.POST, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.name())
+                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.name())
+                .antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
                 .anyRequest() // here plus this line it become: we want to authorize any request
                 .authenticated() // here plus this line it become: any request we want to authorize must be authenticated (client must specify username and password)
                 .and()
@@ -69,7 +78,13 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .password(passwordEncoder.encode("mypassword123")) // in api we must force user to have a strong password to avoid brut force
                 .roles(ADMIN.name()) // role_name ADMIN will be write internally by spring security as ROLE_ADMIN
                 .build();
-        return new InMemoryUserDetailsManager(annaSmith, linda);
+
+        UserDetails tom = User.builder()
+                .username("tom")
+                .password(passwordEncoder.encode("mypassword1234")) // in api we must force user to have a strong password to avoid brut force
+                .roles(ADMINTRAINEE.name()) // role_name ADMIN will be write internally by spring security as ROLE_ADMINTRAINEE
+                .build();
+        return new InMemoryUserDetailsManager(annaSmith, linda, tom);
 
     }
 }

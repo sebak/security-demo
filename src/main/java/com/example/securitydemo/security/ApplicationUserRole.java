@@ -9,7 +9,8 @@ import static com.example.securitydemo.security.ApplicationUserPermission.*;
 //a role can have 0 or n permissions
 public enum ApplicationUserRole {
     STUDENT(Sets.newHashSet()), // student in this case has no permissions
-    ADMIN(Sets.newHashSet(STUDENT_READ, STUDENT_WRITE, COURSE_READ, COURSE_WRITE));
+    ADMIN(Sets.newHashSet(STUDENT_READ, STUDENT_WRITE, COURSE_READ, COURSE_WRITE)),
+    ADMINTRAINEE(Sets.newHashSet(STUDENT_READ, COURSE_READ)); // the permissions of this role is define in step_3_acces_api_by_roles_permission.png
 
     private final Set<ApplicationUserPermission> permissions;
 
