@@ -2,6 +2,7 @@ package com.example.securitydemo.api.controllers;
 
 import com.example.securitydemo.api.interfaces.StudentManagementApi;
 import com.example.securitydemo.model.internal.Student;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +29,13 @@ public class StudentManagementController implements StudentManagementApi {
     }
 
     @Override
+    /**
+     * To use annotation to secure application we call @PreAuthorize by giving in parameters the antMatchers define in configure of ApplicationSecurityConfig.class
+     * for role we need to add prefix ROLE_
+     * So we can comment the equivalent in configure function and add in the enable @EnableGlobalMethodSecurity(prePostEnabled = true) in the
+     * ApplicationSecurityConfig.class to say that we are going to use annotation for security
+     */
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN, ROLE_ADMINTRAINEE')")
     public List<Student> getAllStudent () {
         return students;
     }
@@ -38,6 +46,7 @@ public class StudentManagementController implements StudentManagementApi {
      to avoid to write on it
      */
     @Override
+    @PreAuthorize("hasAuthority('student:write')")
     public void registerNewStudent(Student student) throws Exception {
         UUID newStudentId = UUID.randomUUID();
         boolean studentExist = studentExist(newStudentId);
@@ -52,6 +61,7 @@ public class StudentManagementController implements StudentManagementApi {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('student:write')")
     public void deleteStudent(UUID studentId) {
         students.stream()
                 .filter(student -> student.getId().equals(studentId))
@@ -59,6 +69,7 @@ public class StudentManagementController implements StudentManagementApi {
     }
 
     @Override
+    @PreAuthorize("hasAuthority('student:write')")
     public void updateStudent(Student updatedStudent) throws Exception {
         boolean studentExist = studentExist(updatedStudent.getId());
 

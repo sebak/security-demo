@@ -17,4 +17,6 @@ we must have
 
 4- Authorities or Permissions
 
-5- and more others thing
+5 - Secure resources with annotations
+
+6- and more others thing

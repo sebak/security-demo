@@ -6,6 +6,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -26,6 +27,7 @@ webflux security config is a little bit different from web-starter
 the one we will choose is configure with HttpSecurity param
  */
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
     final PasswordEncoder passwordEncoder;
@@ -45,9 +47,9 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                  * only users with COURSE_WRITE permissions can delete, post and put in management api
                  * and also we add more security by saying that management api can only be access by roles ADMIN and ADMINTRAINEE
                  */
-                .antMatchers(HttpMethod.DELETE, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission()) // tom will not be able to delete in this api because ADMINTRAINEE not have that permission
-                .antMatchers(HttpMethod.POST, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission())
-                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission())
+                //.antMatchers(HttpMethod.DELETE, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission()) // tom will not be able to delete in this api because ADMINTRAINEE not have that permission
+                //.antMatchers(HttpMethod.POST, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission())
+                //.antMatchers(HttpMethod.PUT, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission())
                 //.antMatchers(HttpMethod.GET, "/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name()) // the 2 roles can only access to pattern "/management/api/**" with GET verb
                 /**
                  * i can comment the line up and remove verb but becarefull because i have to respect order of matchers because for tom it will ask:
@@ -56,7 +58,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                  * but if we put .antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name()) Delete, post and put matcher since we have not
                  * put the verb, tom will be able to delete post and put so order is important and the better way is to put a verb to be more secure
                  */
-                .antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
+                //.antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
                 .anyRequest() // here plus this line it become: we want to authorize any request
                 .authenticated() // here plus this line it become: any request we want to authorize must be authenticated (client must specify username and password)
                 .and()
