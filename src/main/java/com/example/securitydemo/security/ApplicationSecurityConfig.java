@@ -45,9 +45,17 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                  * only users with COURSE_WRITE permissions can delete, post and put in management api
                  * and also we add more security by saying that management api can only be access by roles ADMIN and ADMINTRAINEE
                  */
-                .antMatchers(HttpMethod.DELETE, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.name())
-                .antMatchers(HttpMethod.POST, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.name())
-                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.name())
+                .antMatchers(HttpMethod.DELETE, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission()) // tom will not be able to delete in this api because ADMINTRAINEE not have that permission
+                .antMatchers(HttpMethod.POST, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission())
+                .antMatchers(HttpMethod.PUT, "/management/api/**").hasAuthority(ApplicationUserPermission.COURSE_WRITE.getPermission())
+                //.antMatchers(HttpMethod.GET, "/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name()) // the 2 roles can only access to pattern "/management/api/**" with GET verb
+                /**
+                 * i can comment the line up and remove verb but becarefull because i have to respect order of matchers because for tom it will ask:
+                 * can i access /api/** : no tom has no STUDENT role
+                 * can i delete on /management/api/** (when tom try) no because tom not have COURSE_WRITE permission, the same thing for Post and Put
+                 * but if we put .antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name()) Delete, post and put matcher since we have not
+                 * put the verb, tom will be able to delete post and put so order is important and the better way is to put a verb to be more secure
+                 */
                 .antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
                 .anyRequest() // here plus this line it become: we want to authorize any request
                 .authenticated() // here plus this line it become: any request we want to authorize must be authenticated (client must specify username and password)
@@ -70,19 +78,30 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 have passwordEncoder so we must generate a PasswordEncoder as bean by returning one of the class that implement that interface to be able to use one of the function
                 (encode) define in that interface  so we do that in PasswordConfig class and use it here after instantiation*/
                 .password(passwordEncoder.encode("mypassword")) // in api we must force user to have a strong password to avoid brut force
-                .roles(STUDENT.name()) // role_name STUDENT will be write internally by spring security as ROLE_STUDENT
+                /**
+                 * Step 4
+                 * when we click on roles under we go to the function that add a role in param by appending it with ROLE_ in the list of authorities after instantiation
+                 * GrantedAuthority or SimpleGrantedAuthority which implement GrantedAuthority. so we can replace roles function by building our own collections of SimpleGrantedAuthority.
+                 * Since ours roles are define in ApplicationUserRole.class we are going to build our collection of SimpleGrantedAuthority in grantedAuthorities function
+                 * we now comment .roles(STUDENT.name()) and call our function STUDENT.grantedAuthorities()) by using .authorities() witch take collection of GrantedAuthority
+                 * So for each user by using  authorities() we attach all his permissions and his role inside collection of GrantedAuthority
+                 */
+                //.roles(STUDENT.name()) // role_name STUDENT will be write internally by spring security as ROLE_STUDENT
+                .authorities(STUDENT.grantedAuthorities())
                 .build();
 
         UserDetails linda = User.builder()
                 .username("linda")
                 .password(passwordEncoder.encode("mypassword123")) // in api we must force user to have a strong password to avoid brut force
-                .roles(ADMIN.name()) // role_name ADMIN will be write internally by spring security as ROLE_ADMIN
+                //.roles(ADMIN.name()) // role_name ADMIN will be write internally by spring security as ROLE_ADMIN
+                .authorities(ADMIN.grantedAuthorities())
                 .build();
 
         UserDetails tom = User.builder()
                 .username("tom")
                 .password(passwordEncoder.encode("mypassword1234")) // in api we must force user to have a strong password to avoid brut force
-                .roles(ADMINTRAINEE.name()) // role_name ADMIN will be write internally by spring security as ROLE_ADMINTRAINEE
+                //.roles(ADMINTRAINEE.name()) // role_name ADMIN will be write internally by spring security as ROLE_ADMINTRAINEE
+                .authorities(ADMINTRAINEE.grantedAuthorities())
                 .build();
         return new InMemoryUserDetailsManager(annaSmith, linda, tom);
 
