@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import static com.example.securitydemo.security.ApplicationUserRole.*;
 
@@ -35,6 +36,22 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+                /**
+                 * look csrf.png . csrf (cross side request forgery) that mean imitation or a false copy of a real document(bank signature etc..) or action. the attacker
+                 * forge a request to take money from user that is log ia good site where you can by by your credit card articles, so the attacker will forge a request and embed into it
+                 * a malicious link that if a user click on it sent money from user to attacker.
+                 * The way spring security protect from that is by enable csrf look csrf_enable_protection.png :
+                 * when the client frontend log in our server, spring security send a csrf token from server to client in a cookie
+                 * a frontend use that token for every form submission (post, put, delete) the server validate that token to see if it match with what it have send previously.
+                 *  we have disable csrf (.csrf().disable()) under to be able to do post, put and delete because we have no access to the token csrf send by our server and any
+                 *  3 verb was failing but now we are going to generate that csrf token for our client to avoid to let .csrf().disable() which is a very very bad for security
+                 *  when aur client submit directly request to our server in that case we must replace .csrf().disable() by .csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and()
+                 *  and we have to implement in our client how to get that token and send it back in the header of our request (https://www.baeldung.com/spring-security-csrf)
+                 *  but if our end point are not directly call by user but it is just internal calling we can left .csrf().disable() but in the case of interaction between user request
+                 *  and server never forget to not disable csrf and implement token get by client and sent in post, put delete verb.
+                 *  For the seek of our tutorial and the fact that we test with postman we can disable it
+                 *
+                 */
                 .csrf().disable()
                 .authorizeRequests() // we want to authorize request
                 /* The next both line is to tell that any file that will be in root(/), will have index in the name, will be in /css and /js

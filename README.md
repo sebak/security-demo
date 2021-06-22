@@ -19,4 +19,6 @@ we must have
 
 5 - Secure resources with annotations
 
-6- and more others thing
+6 - Understand CSRF
+
+7- and more others thing
