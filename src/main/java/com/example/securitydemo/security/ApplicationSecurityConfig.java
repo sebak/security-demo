@@ -79,7 +79,22 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest() // here plus this line it become: we want to authorize any request
                 .authenticated() // here plus this line it become: any request we want to authorize must be authenticated (client must specify username and password)
                 .and()
-                .httpBasic(); // here plus this line it become: any request we want to authorize must be authenticated with basic authentication
+                //.httpBasic(); // here plus this line it become: any request we want to authorize must be authenticated with basic authentication
+                /**
+                 *  step 7 to use form based auth we just replace .httpBasic() by .formLogin() look how it work in form_based_auth.png: the client send a username and password to the server
+                 *  the server validate and send a sessionId to the client any request the client will to it will just sent to server that sessionId that will be verify by server to answer the
+                 *  request, the sessionId lifetime is 30 minutes. that sessionId is store in memory data base but we can use postgresql or Redis
+                 *  if i call in browser this url http://localhost:7902/management/api/v1/student i will have a form.
+                 *  To see SessionId in browser:
+                 *  right click ->inspect -> application -> storages -> cookies
+                 *  sometime we want to customize that form page by adding more fields so we will just add after .formLogin(), .loginPage("/login") and add in pom.xml a spring-boot-starter-thymeleaf
+                 *  dependency. spring-boot-starter-thymeleaf it is a templating engine who allow to do many thing in html file. we difine our login.html in resources/templates and we call it in
+                 *  TemplateController we add .permitAll() to not be block by spring security for that page. wh we connect to login page it redirect us to index page so we fix it by creating a new view
+                 *  where we want to go when we log successful, let say that in this case we want to be redirected in courses.html so we add .defaultSuccessUrl("/courses", true)
+                 */
+                .formLogin()
+                .loginPage("/login").permitAll()
+                .defaultSuccessUrl("/courses", true);
     }
 
     @Override

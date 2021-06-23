@@ -21,4 +21,6 @@ we must have
 
 6 - Understand CSRF
 
-7- and more others thing
+7 - Form Based Auth
+
+8- and more others thing
