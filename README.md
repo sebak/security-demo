@@ -23,4 +23,6 @@ we must have
 
 7 - Form Based Auth
 
-8- and more others thing
+8 - Remember Me feature
+
+9- and more others thing
