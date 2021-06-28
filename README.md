@@ -25,4 +25,6 @@ we must have
 
 8 - Remember Me feature
 
-9- and more others thing
+9 - Db Authenticate: we use a real db instead of in memory one
+
+10- and more others thing
