@@ -1,27 +1,25 @@
 package com.example.securitydemo.security;
 
 import com.example.securitydemo.auth.ApplicationUserService;
+import com.example.securitydemo.jwt.JwtConfigProperties;
+import com.example.securitydemo.jwt.JwtTokenVerifier;
+import com.example.securitydemo.jwt.JwtUsernamePasswordAuthenticationFilter;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import java.util.concurrent.TimeUnit;
+
+import javax.crypto.SecretKey;
 
 import static com.example.securitydemo.security.ApplicationUserRole.*;
 
@@ -39,6 +37,8 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
     final PasswordEncoder passwordEncoder;
     final ApplicationUserService applicationUserService; // step 9
+    final SecretKey secretKey; // step 10 bean load in JwtSecret class
+    final JwtConfigProperties jwtConfigProperties;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -60,6 +60,16 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                  *
                  */
                 .csrf().disable()
+                /*
+                    jwt must be stateless, the session will not be store in db
+                    step_10_jwt_request_filter.png explanation
+                    request must rich api but filter are doing kind of validation before destination (api) and order of filter is not always garantie.
+                     in our case the first filter is JwtUsernamePasswordAuthenticationFilter in witch we have the method to get username and password and generate token
+                 */
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilter(new JwtUsernamePasswordAuthenticationFilter(authenticationManager(), jwtConfigProperties, secretKey))
+                .addFilterAfter(new JwtTokenVerifier(jwtConfigProperties, secretKey), JwtUsernamePasswordAuthenticationFilter.class) // this filter verify if token sent by client is valid it have to be after the first filter (step 10)
                 .authorizeRequests() // we want to authorize request
                 /* The next both line is to tell that any file that will be in root(/), will have index in the name, will be in /css and /js
                 dir dont need to be authenticate. i can test on browser by this url http://localhost:7902/ (it will give me access to index.html define in resources/static),
@@ -84,50 +94,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                  */
                 //.antMatchers("/management/api/**").hasAnyRole(ADMIN.name(), ADMINTRAINEE.name())
                 .anyRequest() // here plus this line it become: we want to authorize any request
-                .authenticated() // here plus this line it become: any request we want to authorize must be authenticated (client must specify username and password)
-                .and()
-                //.httpBasic(); // here plus this line it become: any request we want to authorize must be authenticated with basic authentication
-                /**
-                 *  step 7 to use form based auth we just replace .httpBasic() by .formLogin() look how it work in form_based_auth.png: the client send a username and password to the server
-                 *  the server validate and send a sessionId to the client any request the client will to it will just sent to server that sessionId that will be verify by server to answer the
-                 *  request, the sessionId lifetime is 30 minutes of inactivity. that sessionId is store in memory data base but we can use postgresql or Redis
-                 *  if i call in browser this url http://localhost:7902/management/api/v1/student i will have a form.
-                 *  To see SessionId in browser:
-                 *  right click ->inspect -> application -> storages -> cookies
-                 *  sometime we want to customize that form page by adding more fields so we will just add after .formLogin(), .loginPage("/login") and add in pom.xml a spring-boot-starter-thymeleaf
-                 *  dependency. spring-boot-starter-thymeleaf it is a templating engine who allow to do many thing in html file. we difine our login.html in resources/templates and we call it in
-                 *  TemplateController we add .permitAll() to not be block by spring security for that page. wh we connect to login page it redirect us to index page so we fix it by creating a new view
-                 *  where we want to go when we log successful, let say that in this case we want to be redirected in courses.html so we add .defaultSuccessUrl("/courses", true)
-                 */
-                .formLogin()
-                    .loginPage("/login")
-                    .permitAll()
-                    // it correspond to the param name in login form we can change the name if we want but we have to do that also in login form
-                    .passwordParameter("password")
-                    .usernameParameter("username")
-                .defaultSuccessUrl("/courses", true)
-                .and()
-                /**
-                 * step 8 that mean that sessionID will expired not after 30 minutes of inactivity but after 2 weeks of inactivity.
-                 * we need to add a check box in login.html to ask the user if he want to be remember for 2 week. we will have a remember me cookies store in database (in memory one if we
-                 * have no set a postgresql or redis one (see it when we submit login page by right click ->inspect -> application -> storages -> cookies)
-                 * a remember me cookies contain a username, expiration datetime a md5 (of username and expiration datetime)
-                 * if i not want default value of 2 week i can change it as we want let say 21 days .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21))
-                 */
-                .rememberMe()
-                    .tokenValiditySeconds((int)TimeUnit.DAYS.toSeconds(21))
-                    .key("Strong string KEY to secure generated hash")
-                    .rememberMeParameter("remember-me")
-                .and()
-                .logout().logoutUrl("/logout")
-                // this mean that for logout i am going to use get request, this is just use when csrf is disable if not never use get but post (by default by deleting the line under) to avoid csrf attack
-                .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET"))
-                .clearAuthentication(true)
-                .invalidateHttpSession(true)
-                // right click ->inspect -> application -> storages -> cookies
-                .deleteCookies("JSESSIONID", "remember-me", "SESSION")
-                // when we logout successfully we are redirect to login page
-                .logoutSuccessUrl("/login");
+                .authenticated(); // here plus this line it become: any request we want to authorize must be authenticated (client must specify username and password)
     }
 
     //@Override

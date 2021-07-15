@@ -1,3 +1,5 @@
+https://billykorando.com/2019/12/30/building-a-custom-spring-boot-starter/
+
 # spring-boot security learning
 
 - step 1 manage Basic Auth:
@@ -27,4 +29,20 @@ we must have
 
 9 - Db Authenticate: we use a real db instead of in memory one
 
-10- and more others thing
+10 - jason web token
+  look at step_10_jwt.png to see why it is useful to use jwt when we have many applications who try to connect in our,
+  in that case we can not use basic authentication or form authentication
+
+  jwt is stateless that mean you don't have to store it in db
+  you don't need to put it in session
+  it account be use across many services (so recommended when we have many services that access our application)
+  
+  becareful of what is under
+  
+  if secret key is compromise we are in trouble
+  we don't know when the user is login and when is logout
+  token can be stolen
+
+a user each time is log himself we give him a token even if the previous one has not expired
+what we must do is to keep somewhere in db a relation between token and user, if is ask a new one by re login himself
+we must invalidate the prévious one by exprire it or something else to avoid to have token valid who can be stolen

@@ -2,3 +2,9 @@ server:
   port: 7902
   error:
     include-message: always
+
+application:
+  jwt:
+    secretKey: SecureSecureSecureSecureSecureSecureSecureSecureSecureSecureSecureSecureSecureSecureSecureSecure!?!!!!!MUST_Be_Too_Long_AND_VERY_STRONG_TO_Be_BREAK_1234567890l
+    tokenPrefix: "Bearer " # "Bearer "  must have a space
+    tokenExpirationAfterDays: 1

@@ -26,9 +26,9 @@ public class FakeApplicationUserService implements ApplicationUserDao {
     // it is a kind of mock of what we can get from database
     private List<ApplicationUser> getApplicationUser() {
         List<ApplicationUser> applicationUsers = List.of(
-                new ApplicationUser(STUDENT.grantedAuthorities(), "mypassword", "annasmith", true, true, true, true),
-                new ApplicationUser(ADMIN.grantedAuthorities(), "mypassword123", "linda", true, true, true, true),
-                new ApplicationUser(ADMINTRAINEE.grantedAuthorities(), "mypassword1234", "tom", true, true, true, true)
+                new ApplicationUser(STUDENT.grantedAuthorities(), passwordEncoder.encode("mypassword"), "annasmith", true, true, true, true),
+                new ApplicationUser(ADMIN.grantedAuthorities(), passwordEncoder.encode("mypassword123"), "linda", true, true, true, true),
+                new ApplicationUser(ADMINTRAINEE.grantedAuthorities(), passwordEncoder.encode("mypassword1234"), "tom", true, true, true, true)
         );
 
         return applicationUsers;
